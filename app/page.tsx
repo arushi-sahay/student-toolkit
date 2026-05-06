@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Subject = {
   id: number;
@@ -12,16 +12,43 @@ type Subject = {
 };
 
 export default function Home() {
-  const [subjects, setSubjects] = useState<Subject[]>([
-    {
-      id: 1,
-      name: "",
-      planned: "",
-      conducted: "",
-      attended: "",
-      required: "75",
-    },
-  ]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+
+  // LOAD FROM LOCAL STORAGE
+
+  useEffect(() => {
+    const savedSubjects = localStorage.getItem(
+      "attendance-subjects"
+    );
+
+    if (savedSubjects) {
+      setSubjects(JSON.parse(savedSubjects));
+    } else {
+      setSubjects([
+        {
+          id: Date.now(),
+          name: "",
+          planned: "",
+          conducted: "",
+          attended: "",
+          required: "75",
+        },
+      ]);
+    }
+  }, []);
+
+  // SAVE TO LOCAL STORAGE
+
+  useEffect(() => {
+    if (subjects.length > 0) {
+      localStorage.setItem(
+        "attendance-subjects",
+        JSON.stringify(subjects)
+      );
+    }
+  }, [subjects]);
+
+  // ADD SUBJECT
 
   const addSubject = () => {
     setSubjects([
@@ -37,6 +64,16 @@ export default function Home() {
     ]);
   };
 
+  // DELETE SUBJECT
+
+  const deleteSubject = (id: number) => {
+    setSubjects(
+      subjects.filter((subject) => subject.id !== id)
+    );
+  };
+
+  // UPDATE SUBJECT
+
   const updateSubject = (
     id: number,
     field: keyof Subject,
@@ -51,7 +88,7 @@ export default function Home() {
     );
   };
 
-  // OVERALL DASHBOARD CALCULATIONS
+  // OVERALL DASHBOARD ANALYTICS
 
   const totalConducted = subjects.reduce(
     (sum, subject) =>
@@ -72,13 +109,22 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
 
-        <h1 className="text-4xl font-bold mb-8 text-center">
-          Attendance Survival Dashboard
-        </h1>
+        {/* HEADER */}
 
-        {/* OVERALL DASHBOARD */}
+        <div className="mb-10 text-center">
+          <h1 className="text-4xl font-bold mb-3">
+            Attendance Survival Dashboard
+          </h1>
+
+          <p className="text-gray-600">
+            Plan your attendance. Track risks.
+            Survive the semester.
+          </p>
+        </div>
+
+        {/* OVERALL ANALYTICS */}
 
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
 
@@ -88,8 +134,8 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-4">
 
-            <div className="bg-gray-100 p-4 rounded-xl">
-              <p className="font-medium">
+            <div className="bg-gray-100 p-5 rounded-xl">
+              <p className="text-gray-600 mb-2">
                 Total Conducted
               </p>
 
@@ -98,8 +144,8 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bg-gray-100 p-4 rounded-xl">
-              <p className="font-medium">
+            <div className="bg-gray-100 p-5 rounded-xl">
+              <p className="text-gray-600 mb-2">
                 Total Attended
               </p>
 
@@ -108,8 +154,8 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bg-gray-100 p-4 rounded-xl">
-              <p className="font-medium">
+            <div className="bg-gray-100 p-5 rounded-xl">
+              <p className="text-gray-600 mb-2">
                 Overall Attendance
               </p>
 
@@ -149,17 +195,23 @@ export default function Home() {
 
             const invalidInput =
               attended > conducted ||
+              conducted < 0 ||
+              attended < 0 ||
+              required <= 0 ||
+              required > 100 ||
               (usingPlannedMode &&
-                conducted > planned);
+                (conducted > planned ||
+                  planned <= 0));
 
             let resultMessage = "";
             let resultColor = "";
+            let dangerLevel = "";
 
             if (!invalidInput) {
 
               if (usingPlannedMode) {
 
-                // PLANNED MODE
+                // SEMESTER-CONSTRAINED MODE
 
                 const remainingClasses =
                   planned - conducted;
@@ -238,6 +290,18 @@ export default function Home() {
                   resultColor = "text-red-600";
                 }
               }
+
+              // DANGER LEVEL
+
+              if (currentAttendance >= required + 10) {
+                dangerLevel = "Safe";
+              } else if (
+                currentAttendance >= required + 5
+              ) {
+                dangerLevel = "Moderate";
+              } else {
+                dangerLevel = "Risky";
+              }
             }
 
             return (
@@ -246,19 +310,36 @@ export default function Home() {
                 className="bg-white rounded-2xl shadow-lg p-6"
               >
 
-                <input
-                  type="text"
-                  placeholder="Subject Name"
-                  value={subject.name}
-                  onChange={(e) =>
-                    updateSubject(
-                      subject.id,
-                      "name",
-                      e.target.value
-                    )
-                  }
-                  className="border p-3 rounded-lg w-full mb-5 text-lg font-semibold"
-                />
+                {/* TOP BAR */}
+
+                <div className="flex justify-between items-center mb-5">
+
+                  <input
+                    type="text"
+                    placeholder="Subject Name"
+                    value={subject.name}
+                    onChange={(e) =>
+                      updateSubject(
+                        subject.id,
+                        "name",
+                        e.target.value
+                      )
+                    }
+                    className="border p-3 rounded-lg w-[80%] text-lg font-semibold"
+                  />
+
+                  <button
+                    onClick={() =>
+                      deleteSubject(subject.id)
+                    }
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+
+                </div>
+
+                {/* INPUT GRID */}
 
                 <div className="grid md:grid-cols-2 gap-4">
 
@@ -341,26 +422,50 @@ export default function Home() {
 
                 </div>
 
+                {/* RESULTS */}
+
                 {!invalidInput ? (
 
-                  <div className="mt-6 space-y-4">
+                  <div className="mt-6 grid md:grid-cols-3 gap-4">
 
                     <div className="bg-gray-100 p-4 rounded-xl">
-
-                      <p className="font-medium">
+                      <p className="text-gray-600 mb-2">
                         Current Attendance
                       </p>
 
                       <p className="text-2xl font-bold">
                         {currentAttendance.toFixed(2)}%
                       </p>
+                    </div>
 
+                    <div className="bg-gray-100 p-4 rounded-xl">
+                      <p className="text-gray-600 mb-2">
+                        Status
+                      </p>
+
+                      <p
+                        className={`text-2xl font-bold ${
+                          dangerLevel === "Safe"
+                            ? "text-green-600"
+                            : dangerLevel === "Moderate"
+                            ? "text-yellow-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {dangerLevel}
+                      </p>
                     </div>
 
                     <div
-                      className={`bg-gray-100 p-4 rounded-xl font-medium ${resultColor}`}
+                      className={`bg-gray-100 p-4 rounded-xl ${resultColor}`}
                     >
-                      {resultMessage}
+                      <p className="font-medium">
+                        Analysis
+                      </p>
+
+                      <p className="mt-2">
+                        {resultMessage}
+                      </p>
                     </div>
 
                   </div>
@@ -379,12 +484,18 @@ export default function Home() {
 
         </div>
 
-        <button
-          onClick={addSubject}
-          className="mt-8 bg-black text-white px-6 py-3 rounded-xl font-medium hover:bg-gray-800"
-        >
-          + Add Subject
-        </button>
+        {/* ADD SUBJECT BUTTON */}
+
+        <div className="mt-8 text-center">
+
+          <button
+            onClick={addSubject}
+            className="bg-black text-white px-8 py-4 rounded-xl font-medium hover:bg-gray-800"
+          >
+            + Add Subject
+          </button>
+
+        </div>
 
       </div>
     </main>
