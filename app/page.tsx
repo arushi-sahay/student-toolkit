@@ -1,65 +1,86 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
 
 export default function Home() {
+  const [totalClasses, setTotalClasses] = useState("");
+  const [attendedClasses, setAttendedClasses] = useState("");
+  const [requiredAttendance, setRequiredAttendance] = useState("75");
+
+  const total = Number(totalClasses);
+  const attended = Number(attendedClasses);
+  const required = Number(requiredAttendance);
+
+  const attendance =
+  total > 0 ? (attended / total) * 100 : 0;
+
+  let classesCanMiss = 0;
+  let classesNeeded = 0;
+
+  if (attendance >= required) {
+    while (((attended / (total + classesCanMiss)) * 100) >= required) {
+      classesCanMiss++;
+    }
+
+    classesCanMiss--;
+  } else {
+    while (
+      (((attended + classesNeeded) / (total + classesNeeded)) * 100) <
+      required
+    ) {
+      classesNeeded++;
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-2xl shadow-lg w-[420px]">
+        <h1 className="text-3xl font-bold mb-6 text-center">
+          Attendance Calculator
+        </h1>
+
+        <div className="flex flex-col gap-4">
+          <input
+            type="number"
+            placeholder="Total Classes"
+            value={totalClasses}
+            onChange={(e) => setTotalClasses(e.target.value)}
+            className="border p-3 rounded-lg"
+          />
+
+          <input
+            type="number"
+            placeholder="Attended Classes"
+            value={attendedClasses}
+            onChange={(e) => setAttendedClasses(e.target.value)}
+            className="border p-3 rounded-lg"
+          />
+
+          <input
+            type="number"
+            placeholder="Required Attendance %"
+            value={requiredAttendance}
+            onChange={(e) => setRequiredAttendance(e.target.value)}
+            className="border p-3 rounded-lg"
+          />
+        </div>
+
+        <div className="mt-6 text-center space-y-3">
+          <p className="text-xl font-semibold">
+            Current Attendance: {attendance.toFixed(2)}%
           </p>
+
+          {attendance >= required ? (
+            <p className="text-green-600 font-medium">
+              You can miss {classesCanMiss} more classes.
+            </p>
+          ) : (
+            <p className="text-red-600 font-medium">
+              You need to attend {classesNeeded} consecutive classes.
+            </p>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
