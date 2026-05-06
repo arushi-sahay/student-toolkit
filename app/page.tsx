@@ -3,83 +3,161 @@
 import { useState } from "react";
 
 export default function Home() {
-  const [totalClasses, setTotalClasses] = useState("");
+  const [plannedClasses, setPlannedClasses] = useState("");
+  const [conductedClasses, setConductedClasses] = useState("");
   const [attendedClasses, setAttendedClasses] = useState("");
   const [requiredAttendance, setRequiredAttendance] = useState("75");
 
-  const total = Number(totalClasses);
+  const planned = Number(plannedClasses);
+  const conducted = Number(conductedClasses);
   const attended = Number(attendedClasses);
   const required = Number(requiredAttendance);
 
-  const attendance =
-  total > 0 ? (attended / total) * 100 : 0;
+  const remainingClasses = planned - conducted;
 
-  let classesCanMiss = 0;
-  let classesNeeded = 0;
+  const currentAttendance =
+    conducted > 0 ? (attended / conducted) * 100 : 0;
 
-  if (attendance >= required) {
-    while (((attended / (total + classesCanMiss)) * 100) >= required) {
-      classesCanMiss++;
-    }
+  const minimumAttendanceNeeded = Math.ceil(
+    (required / 100) * planned
+  );
 
-    classesCanMiss--;
-  } else {
-    while (
-      (((attended + classesNeeded) / (total + classesNeeded)) * 100) <
-      required
-    ) {
-      classesNeeded++;
-    }
-  }
+  const futureClassesNeeded = Math.max(
+    minimumAttendanceNeeded - attended,
+    0
+  );
+
+  const maxClassesCanMiss = remainingClasses - futureClassesNeeded;
+
+  const invalidInput =
+    attended > conducted ||
+    conducted > planned ||
+    planned <= 0;
 
   return (
-    <main className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-[420px]">
-        <h1 className="text-3xl font-bold mb-6 text-center">
+    <main className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+        <h1 className="text-3xl font-bold mb-8 text-center">
           Attendance Calculator
         </h1>
 
-        <div className="flex flex-col gap-4">
-          <input
-            type="number"
-            placeholder="Total Classes"
-            value={totalClasses}
-            onChange={(e) => setTotalClasses(e.target.value)}
-            className="border p-3 rounded-lg"
-          />
+        <div className="flex flex-col gap-5">
+          <div>
+            <label className="block mb-2 font-medium">
+              Total Planned Classes
+            </label>
 
-          <input
-            type="number"
-            placeholder="Attended Classes"
-            value={attendedClasses}
-            onChange={(e) => setAttendedClasses(e.target.value)}
-            className="border p-3 rounded-lg"
-          />
+            <input
+              type="number"
+              placeholder="e.g. 120"
+              value={plannedClasses}
+              onChange={(e) => setPlannedClasses(e.target.value)}
+              className="border p-3 rounded-lg w-full"
+            />
+          </div>
 
-          <input
-            type="number"
-            placeholder="Required Attendance %"
-            value={requiredAttendance}
-            onChange={(e) => setRequiredAttendance(e.target.value)}
-            className="border p-3 rounded-lg"
-          />
+          <div>
+            <label className="block mb-2 font-medium">
+              Classes Conducted So Far
+            </label>
+
+            <input
+              type="number"
+              placeholder="e.g. 69"
+              value={conductedClasses}
+              onChange={(e) => setConductedClasses(e.target.value)}
+              className="border p-3 rounded-lg w-full"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2 font-medium">
+              Classes Attended
+            </label>
+
+            <input
+              type="number"
+              placeholder="e.g. 55"
+              value={attendedClasses}
+              onChange={(e) => setAttendedClasses(e.target.value)}
+              className="border p-3 rounded-lg w-full"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2 font-medium">
+              Required Attendance %
+            </label>
+
+            <input
+              type="number"
+              placeholder="75"
+              value={requiredAttendance}
+              onChange={(e) => setRequiredAttendance(e.target.value)}
+              className="border p-3 rounded-lg w-full"
+            />
+          </div>
         </div>
 
-        <div className="mt-6 text-center space-y-3">
-          <p className="text-xl font-semibold">
-            Current Attendance: {attendance.toFixed(2)}%
-          </p>
+        {!invalidInput ? (
+          <div className="mt-8 space-y-4">
+            <div className="bg-gray-100 p-4 rounded-xl">
+              <p className="font-medium">
+                Current Attendance:
+              </p>
 
-          {attendance >= required ? (
-            <p className="text-green-600 font-medium">
-              You can miss {classesCanMiss} more classes.
-            </p>
-          ) : (
-            <p className="text-red-600 font-medium">
-              You need to attend {classesNeeded} consecutive classes.
-            </p>
-          )}
-        </div>
+              <p className="text-2xl font-bold">
+                {currentAttendance.toFixed(2)}%
+              </p>
+            </div>
+
+            <div className="bg-gray-100 p-4 rounded-xl">
+              <p className="font-medium">
+                Remaining Classes:
+              </p>
+
+              <p className="text-2xl font-bold">
+                {remainingClasses}
+              </p>
+            </div>
+
+            <div className="bg-gray-100 p-4 rounded-xl">
+              <p className="font-medium">
+                Minimum Future Classes You Must Attend:
+              </p>
+
+              <p className="text-2xl font-bold">
+                {futureClassesNeeded}
+              </p>
+            </div>
+
+            <div className="bg-gray-100 p-4 rounded-xl">
+              <p className="font-medium">
+                Maximum Classes You Can Still Miss:
+              </p>
+
+              <p
+                className={`text-2xl font-bold ${
+                  maxClassesCanMiss < 0
+                    ? "text-red-600"
+                    : "text-green-600"
+                }`}
+              >
+                {maxClassesCanMiss}
+              </p>
+            </div>
+
+            {maxClassesCanMiss < 0 && (
+              <p className="text-red-600 font-medium text-center">
+                You cannot reach the required attendance anymore.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="mt-8 bg-red-100 text-red-700 p-4 rounded-xl">
+            Please check your inputs.
+          </div>
+        )}
       </div>
     </main>
   );
